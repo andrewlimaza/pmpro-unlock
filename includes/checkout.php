@@ -159,13 +159,16 @@ function pmproup_after_checkout( $user_id, $morder ) {
         return;
     }
 
-    // Get the user's wallet.
-    $wallet = pmproup_try_to_get_wallet();
+    $code = pmpro_get_session_var( 'pmproup_code' );
+    $wallet = pmproup_validate_auth_code( $code, true );
 
     // If user doesn't have a wallet, bail.
     if ( is_wp_error( $wallet ) || ! $wallet ) {
         return;
     }
+
+    update_user_meta( $user_id, 'pmproup_wallet', $wallet ); // Update wallet even if it's false, let's assume for now that people might be unlinking their wallet.
+
 
     // Check if the user has access to the lock for this level.
     if ( pmproup_has_lock_access( $level_lock_options['network_rpc'], $level_lock_options['lock_address'], $wallet ) ) {
@@ -177,6 +180,7 @@ function pmproup_after_checkout( $user_id, $morder ) {
         pmproup_clear_transients( $level_lock_options['lock_address'], $wallet );
     }
 }
+add_action( 'pmpro_after_checkout', 'pmproup_after_checkout', 10, 2 );
 
 /**
  * After a membership level is cancelled, remove the NFT ID from the user's meta.

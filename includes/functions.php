@@ -72,7 +72,7 @@ function pmproup_get_checkout_url( $lock, $redirect_uri ) {
  * @param [type] $code
  * @return void
  */
-function pmproup_validate_auth_code( $code ) {
+function pmproup_validate_auth_code( $code, $force = false ) {
 	if ( empty( $_REQUEST['state'] ) ) {
 		return false;
 	}
@@ -93,12 +93,15 @@ function pmproup_validate_auth_code( $code ) {
 		'redirection' => '30',
 	);
 
-	// If the nonce isn't available or failed to verify stop.
-	if ( ! $params['state'] ) {
-		return false;
-	} else {
-		if ( ! wp_verify_nonce( $params['state'], 'pmproup_state' ) ) {
+	// The force parameter is used in cases where we just need to get the linked wallet, and not for authenticating during login etc.
+	if ( ! $force ) {
+		if ( ! $params['state'] ) {
 			return false;
+		} else {
+			// If the nonce isn't available or failed to verify stop.
+			if ( ! wp_verify_nonce( $params['state'], 'pmproup_state' ) ) {
+				return false;
+			}
 		}
 	}
 
